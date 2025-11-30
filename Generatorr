@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Генератор сайта с всплывающим окном</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        
+        input[type="file"] {
+            width: 100%;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px dashed rgba(255, 255, 255, 0.4);
+            border-radius: 10px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        input[type="file"]:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.6);
+        }
+        
+        input[type="text"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: none;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            font-size: 16px;
+        }
+        
+        input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .preview {
+            margin-top: 30px;
+            text-align: center;
+        }
+        
+        .preview h2 {
+            margin-bottom: 15px;
+        }
+        
+        #imagePreview {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            display: none;
+        }
+        
+        .buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        
+        button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        #generateBtn {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        #generateBtn:hover {
+            background: #45a049;
+            transform: translateY(-3px);
+        }
+        
+        #testBtn {
+            background: #FF9800;
+            color: white;
+        }
+        
+        #testBtn:hover {
+            background: #e68900;
+            transform: translateY(-3px);
+        }
+        
+        .instructions {
+            margin-top: 40px;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            border-radius: 10px;
+        }
+        
+        .instructions h2 {
+            margin-bottom: 15px;
+        }
+        
+        .instructions ol {
+            padding-left: 20px;
+        }
+        
+        .instructions li {
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.5s;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+            color: #333;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            animation: scaleUp 0.5s;
+        }
+        
+        .modal-image {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .play-button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 50px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .play-button:hover {
+            background: #45a049;
+            transform: scale(1.05);
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes scaleUp {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Генератор сайта с всплывающим окном</h1>
+        
+        <div class="form-group">
+            <label for="imageUpload">Загрузите картинку для всплывающего окна:</label>
+            <input type="file" id="imageUpload" accept="image/*">
+        </div>
+        
+        <div class="form-group">
+            <label for="musicUpload">Загрузите музыку (MP3):</label>
+            <input type="file" id="musicUpload" accept="audio/*">
+        </div>
+        
+        <div class="form-group">
+            <label for="siteTitle">Название вашего сайта:</label>
+            <input type="text" id="siteTitle" placeholder="Мой сайт с музыкой">
+        </div>
+        
+        <div class="preview">
+            <h2>Предпросмотр картинки:</h2>
+            <img id="imagePreview" src="#" alt="Предпросмотр">
+        </div>
+        
+        <div class="buttons">
+            <button id="testBtn">Тестировать</button>
+            <button id="generateBtn">Сгенерировать сайт</button>
+        </div>
+        
+        <div class="instructions">
+            <h2>Как использовать:</h2>
+            <ol>
+                <li>Загрузите картинку и музыку с помощью форм выше</li>
+                <li>Нажмите "Тестировать" чтобы посмотреть как будет выглядеть всплывающее окно</li>
+                <li>Нажмите "Сгенерировать сайт" чтобы скачать HTML файл</li>
+                <li>Загрузите скачанный файл и ваши медиафайлы в репозиторий GitHub</li>
+                <li>Включите GitHub Pages в настройках репозитория</li>
+                <li>Ваш сайт будет доступен по адресу: username.github.io/repository-name</li>
+            </ol>
+        </div>
+    </div>
+    
+    <!-- Модальное окно для тестирования -->
+    <div class="modal" id="testModal">
+        <div class="modal-content">
+            <img id="modalImage" class="modal-image" src="#" alt="Всплывающая картинка">
+            <button class="play-button" id="playMusic">Включить музыку</button>
+        </div>
+    </div>
+    
+    <script>
+        // Элементы DOM
+        const imageUpload = document.getElementById('imageUpload');
+        const musicUpload = document.getElementById('musicUpload');
+        const siteTitle = document.getElementById('siteTitle');
+        const imagePreview = document.getElementById('imagePreview');
+        const testBtn = document.getElementById('testBtn');
+        const generateBtn = document.getElementById('generateBtn');
+        const testModal = document.getElementById('testModal');
+        const modalImage = document.getElementById('modalImage');
+        const playMusicBtn = document.getElementById('playMusic');
+        
+        let uploadedImage = null;
+        let uploadedMusic = null;
+        let audio = null;
+        
+        // Обработчик загрузки картинки
+        imageUpload.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    imagePreview.src = e.target.result;
+                    imagePreview.style.display = 'block';
+                    uploadedImage = e.target.result;
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        // Обработчик загрузки музыки
+        musicUpload.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    uploadedMusic = e.target.result;
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        // Тестирование всплывающего окна
+        testBtn.addEventListener('click', function() {
+            if (!uploadedImage) {
+                alert('Пожалуйста, загрузите картинку');
+                return;
+            }
+            
+            modalImage.src = uploadedImage;
+            testModal.style.display = 'flex';
+            
+            // Создаем аудио элемент если музыка загружена
+            if (uploadedMusic) {
+                audio = new Audio(uploadedMusic);
+                playMusicBtn.style.display = 'block';
+            } else {
+                playMusicBtn.style.display = 'none';
+            }
+        });
+        
+        // Воспроизведение музыки в тестовом режиме
+        playMusicBtn.addEventListener('click', function() {
+            if (audio) {
+                audio.play();
+                playMusicBtn.textContent = 'Музыка играет...';
+                playMusicBtn.disabled = true;
+                
+                // Сброс кнопки после окончания музыки
+                audio.addEventListener('ended', function() {
+                    playMusicBtn.textContent = 'Включить музыку';
+                    playMusicBtn.disabled = false;
+                });
+            }
+        });
+        
+        // Закрытие модального окна при клике вне его
+        testModal.addEventListener('click', function(e) {
+            if (e.target === testModal) {
+                testModal.style.display = 'none';
+                if (audio) {
+                    audio.pause();
+                    audio.currentTime = 0;
+                }
+            }
+        });
+        
+        // Генерация HTML файла
+        generateBtn.addEventListener('click', function() {
+            if (!uploadedImage) {
+                alert('Пожалуйста, загрузите картинку');
+                return;
+            }
+            
+            // Получаем имена файлов
+            const imageName = imageUpload.files[0] ? imageUpload.files[0].name : 'image.jpg';
+            const musicName = musicUpload.files[0] ? musicUpload.files[0].name : 'music.mp3';
+            const title = siteTitle.value || 'Мой сайт с музыкой';
+            
+            // Создаем HTML код
+            const htmlCode = `<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${title}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            text-align: center;
+        }
+        
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            animation: fadeIn 0.5s;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+            color: #333;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            animation: scaleUp 0.5s;
+        }
+        
+        .modal-image {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .play-button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 50px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .play-button:hover {
+            background: #45a049;
+            transform: scale(1.05);
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes scaleUp {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        
+        .content {
+            padding: 20px;
+        }
+        
+        h1 {
+            margin-bottom: 20px;
+            font-size: 2.5rem;
+        }
+        
+        p {
+            font-size: 1.2rem;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="modal" id="popupModal">
+        <div class="modal-content">
+            <img src="${imageName}" alt="Всплывающая картинка" class="modal-image">
+            <button class="play-button" id="playButton">Включить музыку</button>
+        </div>
+    </div>
+    
+    <div class="content">
+        <h1>${title}</h1>
+        <p>Добро пожаловать на мой сайт!</p>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const modal = document.getElementById('popupModal');
+            const playButton = document.getElementById('playButton');
+            const audio = new Audio('${musicName}');
+            
+            // Показываем модальное окно при загрузке страницы
+            modal.style.display = 'flex';
+            
+            // Воспроизведение музыки
+            playButton.addEventListener('click', function() {
+                audio.play();
+                playButton.textContent = 'Музыка играет...';
+                playButton.disabled = true;
+                
+                // Скрываем модальное окно после начала воспроизведения
+                setTimeout(function() {
+                    modal.style.display = 'none';
+                }, 500);
+                
+                // Сброс кнопки после окончания музыки
+                audio.addEventListener('ended', function() {
+                    playButton.textContent = 'Включить музыку';
+                    playButton.disabled = false;
+                });
+            });
+            
+            // Закрытие модального окна при клике вне его
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    modal.style.display = 'none';
+                }
+            });
+        });
+    <\/script>
+</body>
+</html>`;
+            
+            // Создаем и скачиваем HTML файл
+            const blob = new Blob([htmlCode], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'index.html';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            alert('HTML файл успешно сгенерирован! Не забудьте загрузить его вместе с картинкой и музыкой на GitHub.');
+        });
+    </script>
+</body>
+</html>
